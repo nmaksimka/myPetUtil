@@ -38,3 +38,11 @@ tasks.withType<JavaCompile> {
 tasks.test {
     useJUnitPlatform()
 }
+
+// Выгрузить все спрайты в build/sprites/sheet.png, чтобы посмотреть глазами
+tasks.register<JavaExec>("exportSprites") {
+    group = "tools"
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass = "io.github.nmaksimka.mypetutil.tools.SpriteSheetExporter"
+    args(layout.buildDirectory.dir("sprites").get().asFile.absolutePath)
+}
