@@ -49,3 +49,16 @@ tasks.register<JavaExec>("exportSprites") {
     mainClass = "io.github.nmaksimka.mypetutil.tools.SpriteSheetExporter"
     args(layout.buildDirectory.dir("sprites").get().asFile.absolutePath)
 }
+
+// gradlew run -Dmypetutil.home=папка — запустить с отдельными настройками (удобно для проверки)
+tasks.named<JavaExec>("run") {
+    System.getProperty("mypetutil.home")?.let { systemProperty("mypetutil.home", it) }
+    System.getProperty("mypetutil.debug")?.let { systemProperty("mypetutil.debug", it) }
+}
+
+// Показать окна, которые видит сканер (для отладки)
+tasks.register<JavaExec>("dumpWindows") {
+    group = "tools"
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass = "io.github.nmaksimka.mypetutil.platform.WindowDump"
+}
