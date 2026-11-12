@@ -98,6 +98,15 @@ public final class FoodItem {
         owner = null;
     }
 
+    /** Еду снова взяли мышкой. */
+    public void hold() {
+        state = State.DRAGGED;
+        owner = null;
+        vx = 0;
+        vy = 0;
+        restTime = 0;
+    }
+
     public void markEaten() {
         eaten = true;
     }
