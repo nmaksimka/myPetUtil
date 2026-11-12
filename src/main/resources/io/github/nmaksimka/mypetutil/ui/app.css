@@ -1,0 +1,484 @@
+/*
+ * Оформление окна настроек.
+ * Цвета задаются переменными (looked-up colors) в .theme-light / .theme-dark,
+ * поэтому тема переключается сменой одного класса у корня.
+ */
+
+.root.theme-light {
+    -bg: #F3EFE7;
+    -side: #EBE5D9;
+    -surface: #FFFDF8;
+    -hover: #E4DCCD;
+    -line: #D6CDBC;
+    -ink: #211D18;
+    -muted: #716859;
+    -accent: #D97757;
+    -accent-hover: #C9673F;
+    -accent-soft: #F6DFD3;
+    -on-accent: #FFFFFF;
+    -shadow: #211D18;
+    -danger: #B9442F;
+    -good: #4E9A5B;
+    -warn: #D9A21B;
+}
+
+.root.theme-dark {
+    -bg: #17161B;
+    -side: #1E1D23;
+    -surface: #25242C;
+    -hover: #2E2D36;
+    -line: #3A3843;
+    -ink: #F1ECE4;
+    -muted: #A29A8E;
+    -accent: #E2896A;
+    -accent-hover: #EE9C7F;
+    -accent-soft: #3B2B25;
+    -on-accent: #1A1512;
+    -shadow: #000000;
+    -danger: #F07A63;
+    -good: #77C485;
+    -warn: #EBC05A;
+}
+
+.root {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+    -fx-background-color: -bg;
+    -fx-text-fill: -ink;
+    -fx-focus-color: -accent;
+    -fx-faint-focus-color: transparent;
+    -fx-accent: -accent;
+}
+
+.label {
+    -fx-text-fill: -ink;
+}
+
+/* ---------- боковая панель ---------- */
+
+.sidebar {
+    -fx-background-color: -side;
+    -fx-border-color: transparent -line transparent transparent;
+    -fx-border-width: 0 1.5 0 0;
+    -fx-padding: 22 14 16 14;
+    -fx-spacing: 4;
+}
+
+.logo-text {
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 12px;
+    -fx-text-fill: -ink;
+}
+
+.logo-sub {
+    -fx-text-fill: -muted;
+    -fx-font-size: 12px;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -muted;
+    -fx-font-size: 14px;
+    -fx-padding: 9 12 9 12;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-border-color: transparent;
+    -fx-border-width: 1.5;
+    -fx-alignment: center-left;
+    -fx-cursor: hand;
+    -fx-max-width: infinity;
+}
+
+.nav-button:hover {
+    -fx-background-color: -hover;
+    -fx-text-fill: -ink;
+}
+
+.nav-button:selected {
+    -fx-background-color: -surface;
+    -fx-text-fill: -ink;
+    -fx-border-color: -line;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(one-pass-box, -shadow, 0, 0, 2, 2);
+}
+
+.nav-marker {
+    -fx-fill: -line;
+}
+
+.nav-button:selected .nav-marker {
+    -fx-fill: -accent;
+}
+
+.side-footer {
+    -fx-text-fill: -muted;
+    -fx-font-size: 12px;
+}
+
+/* ---------- страница ---------- */
+
+.page {
+    -fx-padding: 28 32 32 32;
+    -fx-spacing: 18;
+}
+
+.page-title {
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 17px;
+    -fx-text-fill: -ink;
+}
+
+.page-subtitle {
+    -fx-text-fill: -muted;
+    -fx-font-size: 14px;
+}
+
+.section-title {
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 9px;
+    -fx-text-fill: -muted;
+    -fx-padding: 8 0 0 0;
+}
+
+.muted {
+    -fx-text-fill: -muted;
+}
+
+.small {
+    -fx-font-size: 12px;
+}
+
+.strong {
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* ---------- карточки ---------- */
+
+.card {
+    -fx-background-color: -surface;
+    -fx-border-color: -line;
+    -fx-border-width: 1.5;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(one-pass-box, -shadow, 0, 0, 3, 3);
+}
+
+.pet-card {
+    -fx-spacing: 8;
+    -fx-pref-width: 196;
+    -fx-min-width: 196;
+    -fx-max-width: 196;
+}
+
+.pet-card:hover {
+    -fx-border-color: -accent;
+}
+
+.preview-box {
+    -fx-background-color: -bg;
+    -fx-background-radius: 6;
+    -fx-border-color: -line;
+    -fx-border-radius: 6;
+    -fx-border-style: segments(4, 4);
+}
+
+.chip {
+    -fx-background-color: -accent-soft;
+    -fx-background-radius: 999;
+    -fx-padding: 3 10 3 6;
+    -fx-text-fill: -ink;
+    -fx-font-size: 12px;
+}
+
+/* ---------- кнопки ---------- */
+
+.btn {
+    -fx-background-color: -surface;
+    -fx-text-fill: -ink;
+    -fx-border-color: -ink;
+    -fx-border-width: 1.5;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 7 14 7 14;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(one-pass-box, -shadow, 0, 0, 2, 2);
+}
+
+.btn:hover {
+    -fx-background-color: -hover;
+}
+
+.btn:pressed {
+    -fx-translate-x: 2;
+    -fx-translate-y: 2;
+    -fx-effect: null;
+}
+
+.btn-primary {
+    -fx-background-color: -accent;
+    -fx-text-fill: -on-accent;
+    -fx-border-color: -shadow;
+}
+
+.btn-primary:hover {
+    -fx-background-color: -accent-hover;
+}
+
+.btn:disabled {
+    -fx-opacity: 0.45;
+}
+
+.btn-flat {
+    -fx-background-color: transparent;
+    -fx-text-fill: -muted;
+    -fx-padding: 6 10 6 10;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
+.btn-flat:hover {
+    -fx-background-color: -hover;
+    -fx-text-fill: -ink;
+}
+
+.btn-danger {
+    -fx-text-fill: -danger;
+}
+
+.btn-danger:hover {
+    -fx-text-fill: -danger;
+}
+
+/* ---------- сегменты (выбор из нескольких) ---------- */
+
+.segment {
+    -fx-background-color: -surface;
+    -fx-text-fill: -ink;
+    -fx-border-color: -line;
+    -fx-border-width: 1.5;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 7 14 7 14;
+    -fx-cursor: hand;
+}
+
+.segment:hover {
+    -fx-border-color: -muted;
+}
+
+.segment:selected {
+    -fx-background-color: -accent;
+    -fx-text-fill: -on-accent;
+    -fx-border-color: -shadow;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(one-pass-box, -shadow, 0, 0, 2, 2);
+}
+
+.segment:disabled {
+    -fx-opacity: 0.45;
+}
+
+/* Крупный выбор режима поведения */
+.mode-option {
+    -fx-background-color: -surface;
+    -fx-spacing: 14;
+    -fx-border-color: -line;
+    -fx-border-width: 1.5;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 14 16 14 16;
+    -fx-cursor: hand;
+    -fx-alignment: top-left;
+    -fx-max-width: infinity;
+}
+
+.mode-option:hover {
+    -fx-border-color: -muted;
+}
+
+.mode-option:selected {
+    -fx-background-color: -accent-soft;
+    -fx-border-color: -accent;
+    -fx-effect: dropshadow(one-pass-box, -shadow, 0, 0, 3, 3);
+}
+
+.radio-dot {
+    -fx-fill: transparent;
+    -fx-stroke: -muted;
+    -fx-stroke-width: 1.5;
+}
+
+.mode-option:selected .radio-dot {
+    -fx-fill: -accent;
+    -fx-stroke: -accent;
+}
+
+/* ---------- переключатель ---------- */
+
+.switch-track {
+    -fx-background-color: -line;
+    -fx-background-radius: 999;
+    -fx-cursor: hand;
+}
+
+.switch-thumb {
+    -fx-background-color: -surface;
+    -fx-background-radius: 999;
+    -fx-border-color: -shadow;
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+}
+
+.switch:on .switch-track {
+    -fx-background-color: -accent;
+}
+
+.switch:disabled {
+    -fx-opacity: 0.45;
+}
+
+/* ---------- строки списков ---------- */
+
+.list {
+    -fx-background-color: -surface;
+    -fx-border-color: -line;
+    -fx-border-width: 1.5;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.row {
+    -fx-padding: 10 14 10 14;
+    -fx-spacing: 12;
+    -fx-alignment: center-left;
+    -fx-border-color: transparent transparent -line transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.row.last {
+    -fx-border-width: 0;
+}
+
+.empty {
+    -fx-padding: 22;
+    -fx-text-fill: -muted;
+}
+
+.banner {
+    -fx-background-color: -accent-soft;
+    -fx-background-radius: 6;
+    -fx-padding: 10 14 10 14;
+}
+
+/* ---------- полоска сытости ---------- */
+
+.satiety-track {
+    -fx-background-color: -line;
+    -fx-background-radius: 3;
+}
+
+.satiety-fill {
+    -fx-background-radius: 3;
+    -fx-background-color: -good;
+}
+
+.satiety-fill.mid {
+    -fx-background-color: -warn;
+}
+
+.satiety-fill.low {
+    -fx-background-color: -danger;
+}
+
+/* ---------- еда ---------- */
+
+.food-tile {
+    -fx-background-color: -surface;
+    -fx-border-color: -line;
+    -fx-border-width: 1.5;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 12 8 10 8;
+    -fx-spacing: 6;
+    -fx-alignment: center;
+    -fx-cursor: open-hand;
+    -fx-pref-width: 128;
+}
+
+.food-tile:hover {
+    -fx-border-color: -accent;
+    -fx-effect: dropshadow(one-pass-box, -shadow, 0, 0, 3, 3);
+}
+
+/* ---------- слайдер ---------- */
+
+.slider .track {
+    -fx-background-color: -line;
+    -fx-background-radius: 3;
+    -fx-pref-height: 6;
+    -fx-background-insets: 0;
+}
+
+.slider .thumb {
+    -fx-background-color: -accent;
+    -fx-background-radius: 3;
+    -fx-border-color: -shadow;
+    -fx-border-radius: 3;
+    -fx-border-width: 1.5;
+    -fx-pref-width: 18;
+    -fx-pref-height: 18;
+    -fx-padding: 8;
+}
+
+.slider .axis {
+    -fx-tick-label-fill: -muted;
+}
+
+.slider .axis .axis-tick-mark,
+.slider .axis .axis-minor-tick-mark {
+    -fx-stroke: transparent;
+}
+
+/* ---------- прокрутка ---------- */
+
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: -bg;
+    -fx-padding: 0;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: -line;
+    -fx-background-radius: 999;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-padding: 0;
+    -fx-shape: "";
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-padding: 0;
+    -fx-shape: "";
+}
+
+.tooltip {
+    -fx-background-color: -ink;
+    -fx-text-fill: -bg;
+    -fx-background-radius: 4;
+    -fx-font-size: 12px;
+}
