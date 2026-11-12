@@ -30,6 +30,10 @@ public final class SettingsStore {
     }
 
     public static Path defaultDirectory() {
+        String override = System.getProperty("mypetutil.home");
+        if (override != null && !override.isBlank()) {
+            return Path.of(override);
+        }
         String appData = System.getenv("APPDATA");
         Path base = appData != null ? Path.of(appData) : Path.of(System.getProperty("user.home"));
         return base.resolve("myPetUtil");
