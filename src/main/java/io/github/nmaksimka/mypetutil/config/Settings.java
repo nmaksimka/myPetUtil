@@ -34,7 +34,7 @@ public class Settings {
     /** Прятать питомцев, когда запрещённая программа открыта на весь экран. */
     public boolean hideOnBlockedFullscreen = true;
 
-    public ThemeMode theme = ThemeMode.SYSTEM;
+    public Theme theme = Theme.SYSTEM;
 
     public boolean autostart = false;
 
@@ -49,7 +49,7 @@ public class Settings {
             hungerSpeed = HungerSpeed.NORMAL;
         }
         if (theme == null) {
-            theme = ThemeMode.SYSTEM;
+            theme = Theme.SYSTEM;
         }
         scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
         if (Double.isNaN(speed) || speed < 0.5 || speed > 2.0) {
