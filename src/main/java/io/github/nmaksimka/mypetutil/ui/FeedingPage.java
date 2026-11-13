@@ -6,6 +6,7 @@ import io.github.nmaksimka.mypetutil.pet.Pet;
 import io.github.nmaksimka.mypetutil.sprite.FoodType;
 import io.github.nmaksimka.mypetutil.sprite.PetCharacter;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import javafx.scene.Cursor;
@@ -15,7 +16,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-/** Вкладка «Кормление»: сытость и кормушка, из которой еду тащат на питомцев. */
+/** Вкладка «Еда»: сытость и кормушка, из которой еду тащат на питомцев. */
 final class FeedingPage implements Page {
 
     private final AppContext ctx;
@@ -24,8 +25,15 @@ final class FeedingPage implements Page {
     FeedingPage(AppContext ctx) {
         this.ctx = ctx;
         Settings s = ctx.settings();
-        root = UiKit.page("Кормление",
-                "У каждого питомца своя любимая еда. Чужую он не тронет — только удивлённо посмотрит.");
+        root = UiKit.page("Еда", "Перетащите еду из кормушки на питомца. Каждый ест только свою.");
+
+        FlowPane tray = new FlowPane(4, 4);
+        for (FoodType food : FoodType.values()) {
+            tray.getChildren().add(foodTile(food));
+        }
+        VBox trayBox = new VBox(tray);
+        trayBox.getStyleClass().add("group");
+        trayBox.setStyle("-fx-padding: 6;");
 
         Switch hunger = new Switch(s.hungerEnabled);
         HBox speed = UiKit.segmented(List.of(HungerSpeed.values()), HungerSpeed::title, s.hungerSpeed, value -> {
@@ -39,38 +47,29 @@ final class FeedingPage implements Page {
             ctx.settingsChanged();
         });
 
-        VBox speedBox = new VBox(10, UiKit.label("Как быстро голодают", "strong"),
-                UiKit.text("Медленно — за 6 часов, обычно — за 3 часа, быстро — за полчаса.", "muted", "small"), speed);
-        speedBox.getStyleClass().add("card");
-
-        FlowPane tray = new FlowPane(12, 12);
-        for (FoodType food : FoodType.values()) {
-            tray.getChildren().add(foodTile(food));
-        }
-
         root.getChildren().addAll(
-                UiKit.section("Сытость"),
-                UiKit.settingRow("Питомцы могут проголодаться",
-                        "Если включить, сытость понемногу убывает. Когда она кончится, питомец сядет и загрустит, "
-                                + "пока его не покормят. Если выключить — питомцы всегда сыты, а еда просто в радость.",
-                        hunger),
-                speedBox,
-                UiKit.section("Кормушка"),
-                UiKit.text("Зажмите еду мышкой и перетащите прямо на питомца. Если отпустить мимо — еда упадёт, "
-                        + "и голодный питомец сам к ней подойдёт.", "muted"),
-                tray,
-                UiKit.button("Покормить всех", this::feedAll));
+                trayBox,
+                left(UiKit.quiet("Покормить всех", this::feedAll)),
+                UiKit.heading("Голод"),
+                UiKit.group(
+                        UiKit.row("Питомцы голодают",
+                                "Когда сытость кончится, питомец сядет и загрустит, пока его не покормят.", hunger),
+                        UiKit.row("Как быстро", "За 6 часов, 3 часа или полчаса.", speed)));
+    }
+
+    private static HBox left(Node node) {
+        return new HBox(node);
     }
 
     private Node foodTile(FoodType food) {
-        String eaters = java.util.Arrays.stream(PetCharacter.values())
+        String eaters = Arrays.stream(PetCharacter.values())
                 .filter(c -> c.food() == food)
                 .map(PetCharacter::title)
                 .collect(Collectors.joining(", "));
-        VBox tile = new VBox(SpritePreview.still(food.grid(), 4.8),
-                UiKit.label(food.title(), "strong"),
+        VBox tile = new VBox(SpritePreview.still(food.grid(), 4.4),
+                UiKit.text(food.title(), "name"),
                 UiKit.label(eaters, "muted", "small"));
-        tile.getStyleClass().add("food-tile");
+        tile.getStyleClass().add("food");
 
         tile.setOnMousePressed(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
@@ -94,7 +93,7 @@ final class FeedingPage implements Page {
 
     @Override
     public String title() {
-        return "Кормление";
+        return "Еда";
     }
 
     @Override

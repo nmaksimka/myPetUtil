@@ -10,7 +10,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 /** Вкладка «Программы»: по окнам каких программ можно гулять. */
@@ -19,17 +18,16 @@ final class AppsPage implements Page {
     private final AppContext ctx;
     private final VBox root;
     private final VBox list = new VBox();
-    private final Label modeBanner;
+    private final Label modeNote;
 
     AppsPage(AppContext ctx) {
         this.ctx = ctx;
         Settings s = ctx.settings();
         root = UiKit.page("Программы",
-                "Сначала питомцам можно гулять везде. Снимите переключатель у программы — "
-                        + "и они перестанут залезать на её окна.");
+                "Питомцы гуляют по окнам всех программ. Выключите программу, и они перестанут на неё залезать.");
 
-        modeBanner = UiKit.text("Сейчас выбран другой режим поведения — окна программ используются только в режиме "
-                + "«" + BehaviorMode.WINDOWS.title() + "». Его можно включить на вкладке «Поведение».", "banner");
+        modeNote = UiKit.text("Окна используются только в режиме «" + BehaviorMode.WINDOWS.title()
+                + "». Сейчас выбран другой, его можно сменить на вкладке «Поведение».", "note");
 
         Switch hide = new Switch(s.hideOnBlockedFullscreen);
         hide.selectedProperty().addListener((obs, old, now) -> {
@@ -37,26 +35,25 @@ final class AppsPage implements Page {
             ctx.settingsChanged();
         });
 
-        list.getStyleClass().add("list");
-        HBox listHeader = new HBox(UiKit.section("Открытые программы"), UiKit.spacer(),
-                UiKit.flat("Обновить список", this::rebuild));
+        list.getStyleClass().add("group");
+        HBox listHeader = new HBox(UiKit.heading("Открытые программы"), UiKit.spacer(),
+                UiKit.quiet("Обновить", this::rebuild));
         listHeader.setAlignment(Pos.BOTTOM_LEFT);
 
-        root.getChildren().addAll(modeBanner,
-                UiKit.settingRow("Прятаться от запрещённых игр",
-                        "Если запрещённая программа развёрнута на весь экран (например, игра), питомцы "
-                                + "прячутся и возвращаются, когда вы из неё выйдете.", hide),
-                listHeader, list,
-                UiKit.text("В полноэкранных программах, которые не запрещены, питомцы гуляют по самому низу монитора.",
-                        "muted", "small"));
+        root.getChildren().addAll(modeNote, listHeader, list,
+                UiKit.heading("Игры на весь экран"),
+                UiKit.group(UiKit.row("Прятаться в выключенных программах",
+                        "Если выключенная программа открыта на весь экран, питомцы исчезают, пока вы из неё не выйдете. "
+                                + "В остальных полноэкранных программах они ходят по самому низу монитора.", hide)));
     }
 
     private void rebuild() {
         Settings s = ctx.settings();
-        modeBanner.setVisible(s.mode != BehaviorMode.WINDOWS);
-        modeBanner.setManaged(s.mode != BehaviorMode.WINDOWS);
+        boolean otherMode = s.mode != BehaviorMode.WINDOWS;
+        modeNote.setVisible(otherMode);
+        modeNote.setManaged(otherMode);
 
-        // exe -> пример заголовка окна; запрещённые показываем, даже если они сейчас закрыты
+        // exe -> пример заголовка; выключенные показываем, даже если сейчас не запущены
         Map<String, String> apps = new TreeMap<>();
         for (RawWindow window : ctx.openWindows()) {
             if (!window.exe().equals("mypetutil.exe") && !window.exe().equals("unknown")) {
@@ -64,15 +61,14 @@ final class AppsPage implements Page {
             }
         }
         for (String blocked : s.blockedApps) {
-            apps.putIfAbsent(blocked, "сейчас не запущена");
+            apps.putIfAbsent(blocked, "не запущена");
         }
 
         list.getChildren().clear();
         if (apps.isEmpty()) {
-            list.getChildren().add(UiKit.text("Открытых окон не нашлось. Откройте программу и нажмите «Обновить список».", "empty"));
+            list.getChildren().add(UiKit.text("Открытых окон нет. Откройте программу и нажмите «Обновить».", "empty"));
             return;
         }
-        int index = 0;
         for (Map.Entry<String, String> app : apps.entrySet()) {
             String exe = app.getKey();
             Switch allowed = new Switch(!s.blockedApps.contains(exe));
@@ -84,16 +80,7 @@ final class AppsPage implements Page {
                 }
                 ctx.settingsChanged();
             });
-            Label title = UiKit.label(app.getValue(), "muted", "small");
-            title.setMaxWidth(420);
-            VBox texts = new VBox(2, UiKit.label(prettyName(exe), "strong"), title);
-            HBox.setHgrow(texts, Priority.ALWAYS);
-            HBox row = new HBox(texts, UiKit.spacer(), allowed);
-            row.getStyleClass().add("row");
-            if (++index == apps.size()) {
-                row.getStyleClass().add("last");
-            }
-            list.getChildren().add(row);
+            UiKit.addRow(list, UiKit.row(prettyName(exe), app.getValue(), allowed));
         }
     }
 

@@ -8,7 +8,6 @@ import io.github.nmaksimka.mypetutil.sprite.PetCharacter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -22,38 +21,34 @@ import javafx.scene.shape.Circle;
 /** Вкладка «Поведение»: режим, размер, скорость, мониторы. */
 final class BehaviorPage implements Page {
 
-    private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
-
     private final AppContext ctx;
     private final VBox root;
     private final StackPane sizePreviewBox = new StackPane();
     private SpritePreview sizePreview;
-    private final Label sizeLabel = UiKit.label("", "muted");
+    private final Label sizeLabel = UiKit.label("", "muted", "small");
 
     BehaviorPage(AppContext ctx) {
         this.ctx = ctx;
         Settings s = ctx.settings();
-        root = UiKit.page("Поведение", "Как питомцы ведут себя на экране. Всё применяется сразу.");
+        root = UiKit.page("Поведение", "Изменения применяются сразу.");
 
-        VBox modes = new VBox(10);
+        VBox modes = UiKit.group();
         List<HBox> options = new ArrayList<>();
         for (BehaviorMode mode : BehaviorMode.values()) {
             Circle dot = new Circle(6);
             dot.getStyleClass().add("radio-dot");
-            VBox texts = new VBox(3, UiKit.label(mode.title(), "strong"), UiKit.text(mode.description(), "muted", "small"));
-            HBox.setHgrow(texts, Priority.ALWAYS);
-            HBox option = new HBox(14, dot, texts);
-            option.setAlignment(Pos.CENTER_LEFT);
-            option.getStyleClass().add("mode-option");
+            HBox option = UiKit.row(mode.title(), mode.description(), null);
+            option.getChildren().add(0, dot);
+            option.getStyleClass().add("clickable");
             option.setUserData(mode);
-            option.pseudoClassStateChanged(SELECTED, s.mode == mode);
+            option.pseudoClassStateChanged(UiKit.SELECTED, s.mode == mode);
             option.setOnMouseClicked(e -> {
                 s.mode = mode;
-                options.forEach(o -> o.pseudoClassStateChanged(SELECTED, o.getUserData() == mode));
+                options.forEach(o -> o.pseudoClassStateChanged(UiKit.SELECTED, o.getUserData() == mode));
                 ctx.settingsChanged();
             });
             options.add(option);
-            modes.getChildren().add(option);
+            UiKit.addRow(modes, option);
         }
 
         Slider size = new Slider(Settings.MIN_SCALE, Settings.MAX_SCALE, s.scale);
@@ -61,7 +56,6 @@ final class BehaviorPage implements Page {
         size.setMinorTickCount(0);
         size.setSnapToTicks(true);
         size.setBlockIncrement(1);
-        HBox.setHgrow(size, Priority.ALWAYS);
         size.valueProperty().addListener((obs, old, now) -> {
             int value = (int) Math.round(now.doubleValue());
             if (value != s.scale) {
@@ -70,27 +64,25 @@ final class BehaviorPage implements Page {
                 ctx.settingsChanged();
             }
         });
-        sizePreviewBox.setPrefSize(100, 100);
-        sizePreviewBox.setMinSize(100, 100);
+        sizePreviewBox.setPrefSize(96, 96);
+        sizePreviewBox.setMinSize(96, 96);
         sizePreviewBox.setAlignment(Pos.BOTTOM_CENTER);
-        sizePreviewBox.getStyleClass().add("preview-box");
-        VBox sizeTexts = new VBox(8, UiKit.label("Размер питомца", "strong"), size, sizeLabel);
+        VBox sizeTexts = new VBox(8, UiKit.label("Размер", "name"), size, sizeLabel);
         HBox.setHgrow(sizeTexts, Priority.ALWAYS);
-        HBox sizeRow = new HBox(20, sizeTexts, sizePreviewBox);
-        sizeRow.setAlignment(Pos.CENTER_LEFT);
-        sizeRow.getStyleClass().add("card");
+        HBox sizeRow = new HBox(24, sizeTexts, sizePreviewBox);
+        sizeRow.getStyleClass().add("row");
         updateSizePreview();
 
         Slider speed = new Slider(0.5, 2.0, s.speed);
         speed.setBlockIncrement(0.1);
-        Label speedLabel = UiKit.label(speedText(s.speed), "muted");
+        Label speedLabel = UiKit.label(speedText(s.speed), "muted", "small");
         speed.valueProperty().addListener((obs, old, now) -> {
             s.speed = Math.round(now.doubleValue() * 10) / 10.0;
             speedLabel.setText(speedText(s.speed));
             ctx.settingsChanged();
         });
-        VBox speedBox = new VBox(8, UiKit.label("Скорость ходьбы", "strong"), speed, speedLabel);
-        speedBox.getStyleClass().add("card");
+        VBox speedRow = new VBox(8, UiKit.label("Скорость", "name"), speed, speedLabel);
+        speedRow.getStyleClass().add("row");
 
         Switch monitors = new Switch(s.multiMonitor);
         monitors.selectedProperty().addListener((obs, old, now) -> {
@@ -99,27 +91,31 @@ final class BehaviorPage implements Page {
         });
 
         root.getChildren().addAll(
-                UiKit.section("Режим"), modes,
-                UiKit.section("Внешний вид"), sizeRow, speedBox,
-                UiKit.section("Несколько мониторов"),
-                UiKit.settingRow("Переходить между мониторами",
-                        "Питомец уходит за край одного монитора и появляется с любой стороны другого.", monitors));
+                UiKit.heading("Режим"), modes,
+                UiKit.heading("Внешний вид"), UiKit.group(sizeRow, speedRow),
+                UiKit.heading("Мониторы"),
+                UiKit.group(UiKit.row("Переходить между мониторами",
+                        "Уходит за край одного монитора и появляется с любой стороны другого.", monitors)));
     }
 
     private void updateSizePreview() {
         int scale = ctx.settings().scale;
-        // в превью размер честный, но не больше рамки
-        double pixel = Math.min(scale, 6);
-        sizePreview = new SpritePreview(PetCharacter.CLAUDE, pixel);
+        sizePreview = new SpritePreview(PetCharacter.CLAUDE, Math.min(scale, 6));
         sizePreview.setAnim(Anim.WALK, System.nanoTime() / 1e9);
         sizePreviewBox.getChildren().setAll(sizePreview);
-        int px = 16 * scale;
-        String name = scale <= 2 ? "Крошечный" : scale == 3 ? "Маленький" : scale == 4 ? "Средний" : scale == 5 ? "Большой" : "Огромный";
-        sizeLabel.setText(name + " · " + px + "×" + px + " точек");
+        String name = switch (scale) {
+            case 2 -> "Крошечный";
+            case 3 -> "Маленький";
+            case 4 -> "Средний";
+            case 5 -> "Большой";
+            default -> "Огромный";
+        };
+        sizeLabel.setText(name + ", " + 16 * scale + " точек");
     }
 
     private static String speedText(double speed) {
-        return String.format(Locale.ROOT, "×%.1f", speed) + (speed < 0.8 ? " · прогулочным шагом" : speed > 1.4 ? " · бегом" : " · обычный шаг");
+        String word = speed < 0.8 ? "прогулочный шаг" : speed > 1.4 ? "бегом" : "обычный шаг";
+        return String.format(Locale.ROOT, "%.1fx, ", speed) + word;
     }
 
     @Override
