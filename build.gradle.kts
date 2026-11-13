@@ -127,3 +127,11 @@ tasks.register<Zip>("zipExe") {
     archiveFileName = "myPetUtil-${project.version}-windows.zip"
     destinationDirectory = distDir
 }
+
+// Картинка-витрина для README: docs/showcase.png
+tasks.register<JavaExec>("exportShowcase") {
+    group = "tools"
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass = "io.github.nmaksimka.mypetutil.tools.ShowcaseExporter"
+    args(layout.projectDirectory.file("docs/showcase.png").asFile.absolutePath)
+}
