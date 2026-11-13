@@ -68,6 +68,19 @@ public enum FoodType {
         "..gGGGGg..",
         "...gg.g...",
         "..........",
+    }),
+
+    WATER("Водичка", new String[] {
+        "....D.....",
+        "....D.....",
+        "...DWD....",
+        "...DWD....",
+        "..DWHWD...",
+        "..DHWWD...",
+        ".DHWWWWD..",
+        ".DWWWWWD..",
+        "..DWWWD...",
+        "...DDD....",
     });
 
     public static final int SIZE = 10;
@@ -108,6 +121,9 @@ public enum FoodType {
                 Map.entry('g', PixelGrid.rgb(0xC7951B)),
                 Map.entry('h', PixelGrid.rgb(0xFFF3B0)),
                 Map.entry('L', PixelGrid.rgb(0x5DAA3C)),
-                Map.entry('t', PixelGrid.rgb(0x6B4A2A)));
+                Map.entry('t', PixelGrid.rgb(0x6B4A2A)),
+                Map.entry('D', PixelGrid.rgb(0x2F7FD1)),
+                Map.entry('W', PixelGrid.rgb(0x6DB8F2)),
+                Map.entry('H', PixelGrid.rgb(0xD8F0FF)));
     }
 }

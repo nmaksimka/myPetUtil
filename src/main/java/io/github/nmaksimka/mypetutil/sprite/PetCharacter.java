@@ -12,7 +12,9 @@ public enum PetCharacter {
     MINION("Миньон", "Маленький, жёлтый и вечно голодный.",
             FoodType.BANANA, new MinionArt(), 1.1),
     STEVE("Стив", "Кубический парень. Крафтит, копает, гуляет.",
-            FoodType.GOLDEN_APPLE, new SteveArt(), 1.0);
+            FoodType.GOLDEN_APPLE, new SteveArt(), 1.0),
+    SAKURA("Сакура", "Деревце в горшочке. Скачет по окнам и роняет лепестки, когда грустит.",
+            FoodType.WATER, new SakuraArt(), 0.7);
 
     private final String title;
     private final String description;
