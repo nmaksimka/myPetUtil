@@ -15,80 +15,99 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-/** Вкладка «Питомцы»: галерея персонажей и список тех, кто уже на экране. */
+/**
+ * Вкладка «Питомцы». Сверху полка, на которой стоят все персонажи — кликом выбирается,
+ * кого выпустить. Ниже список тех, кто уже гуляет по экрану.
+ */
 final class PetsPage implements Page {
+
+    private record Slot(PetCharacter character, VBox node, SpritePreview preview) {
+    }
 
     private record RowRefs(Pet pet, Region fill, Label status) {
     }
 
     private final AppContext ctx;
     private final VBox root;
+    private final List<Slot> slots = new ArrayList<>();
+    private final Label selectedName = UiKit.label("", "title");
+    private final Label selectedText = UiKit.text("", "muted");
+    private final Label selectedFood = UiKit.label("", "muted");
+    private final Button release;
     private final VBox list = new VBox();
-    private final List<SpritePreview> previews = new ArrayList<>();
     private final Map<String, RowRefs> rows = new HashMap<>();
+    private PetCharacter selected = PetCharacter.CLAUDE;
     private double lastRowsUpdate;
     private int shownCount = -1;
     private boolean shownHunger;
 
     PetsPage(AppContext ctx) {
         this.ctx = ctx;
-        root = UiKit.page("Питомцы",
-                "Выберите, кого выпустить на экран. Можно сколько угодно — хоть целую толпу. "
-                        + "Питомца можно взять мышкой, перенести и даже подбросить.");
+        root = UiKit.page("Питомцы", null);
 
-        FlowPane gallery = new FlowPane(16, 16);
+        HBox shelfRow = new HBox(4);
+        shelfRow.setAlignment(Pos.BOTTOM_CENTER);
         for (PetCharacter character : PetCharacter.values()) {
-            gallery.getChildren().add(card(character));
+            shelfRow.getChildren().add(slot(character));
         }
+        Region ground = new Region();
+        ground.getStyleClass().add("shelf-ground");
+        VBox shelf = new VBox(shelfRow, ground);
+        shelf.getStyleClass().add("shelf");
 
-        Button removeAll = UiKit.danger("Убрать всех", () -> {
-            ctx.pets().removeAll();
+        release = UiKit.button("", () -> {
+            ctx.pets().addPet(selected);
             rebuildList();
         });
-        HBox listHeader = new HBox(UiKit.section("Сейчас на экране"), UiKit.spacer(), removeAll);
-        listHeader.setAlignment(Pos.BOTTOM_LEFT);
+        VBox about = new VBox(4, selectedName, selectedText, selectedFood);
+        HBox.setHgrow(about, Priority.ALWAYS);
+        HBox details = new HBox(24, about, release);
+        details.setAlignment(Pos.CENTER_LEFT);
 
-        list.getStyleClass().add("list");
-        root.getChildren().addAll(UiKit.section("Кого выпустить"), gallery, listHeader, list);
+        HBox listHeader = new HBox(UiKit.heading("На экране"), UiKit.spacer(),
+                UiKit.quietDanger("Убрать всех", () -> {
+                    ctx.pets().removeAll();
+                    rebuildList();
+                }));
+        listHeader.setAlignment(Pos.BOTTOM_LEFT);
+        list.getStyleClass().add("group");
+
+        root.getChildren().addAll(shelf, details, listHeader, list,
+                UiKit.text("Питомца можно взять мышкой, перенести и подбросить.", "muted", "small"));
+        select(PetCharacter.CLAUDE);
     }
 
-    private Node card(PetCharacter character) {
-        SpritePreview preview = new SpritePreview(character, 6);
-        previews.add(preview);
-        StackPane previewBox = new StackPane(preview);
-        previewBox.getStyleClass().add("preview-box");
-        previewBox.setPrefHeight(118);
-        previewBox.setAlignment(Pos.BOTTOM_CENTER);
-        previewBox.setStyle("-fx-padding: 0 0 6 0;");
+    private Node slot(PetCharacter character) {
+        SpritePreview preview = new SpritePreview(character, 5);
+        VBox node = new VBox(preview, UiKit.label(character.title(), "shelf-caption"));
+        node.getStyleClass().add("shelf-slot");
+        HBox.setHgrow(node, Priority.ALWAYS);
+        node.setMaxWidth(Double.MAX_VALUE);
+        node.setOnMouseClicked(e -> select(character));
+        node.setOnMouseEntered(e -> preview.setAnim(Anim.WALK, now()));
+        node.setOnMouseExited(e -> preview.setAnim(selected == character ? Anim.HOVER : Anim.IDLE, now()));
+        slots.add(new Slot(character, node, preview));
+        return node;
+    }
 
-        Label food = UiKit.label("Любит: " + character.food().title(), "chip");
-        food.setGraphic(SpritePreview.still(character.food().grid(), 1.6));
-        food.setGraphicTextGap(6);
-
-        Button release = UiKit.primary("Выпустить", () -> {
-            ctx.pets().addPet(character);
-            rebuildList();
-        });
-        release.setMaxWidth(Double.MAX_VALUE);
-
-        Region grow = new Region();
-        VBox.setVgrow(grow, javafx.scene.layout.Priority.ALWAYS);
-        VBox card = new VBox(previewBox,
-                UiKit.label(character.title(), "strong"),
-                UiKit.text(character.description(), "muted", "small"),
-                food, grow, release);
-        card.getStyleClass().addAll("card", "pet-card");
-
-        // при наведении на карточку питомец начинает идти
-        card.setOnMouseEntered(e -> preview.setAnim(Anim.WALK, now()));
-        card.setOnMouseExited(e -> preview.setAnim(Anim.IDLE, now()));
-        return card;
+    private void select(PetCharacter character) {
+        selected = character;
+        for (Slot slot : slots) {
+            boolean on = slot.character() == character;
+            slot.node().pseudoClassStateChanged(UiKit.SELECTED, on);
+            slot.preview().setAnim(on ? Anim.HOVER : Anim.IDLE, now());
+        }
+        selectedName.setText(character.title());
+        selectedText.setText(character.description());
+        selectedFood.setText("Любимая еда: " + character.food().title().toLowerCase());
+        selectedFood.setGraphic(SpritePreview.still(character.food().grid(), 2));
+        release.setText("Выпустить");
     }
 
     private static double now() {
@@ -102,15 +121,11 @@ final class PetsPage implements Page {
         shownCount = pets.size();
         shownHunger = ctx.settings().hungerEnabled;
         if (pets.isEmpty()) {
-            list.getChildren().add(UiKit.text("Пока никого нет. Выпустите кого-нибудь из галереи выше.", "empty"));
+            list.getChildren().add(UiKit.text("Здесь пусто. Выберите персонажа на полке и нажмите «Выпустить».", "empty"));
             return;
         }
-        for (int i = 0; i < pets.size(); i++) {
-            HBox row = row(pets.get(i));
-            if (i == pets.size() - 1) {
-                row.getStyleClass().add("last");
-            }
-            list.getChildren().add(row);
+        for (Pet pet : pets) {
+            UiKit.addRow(list, row(pet));
         }
         updateRows();
     }
@@ -118,24 +133,24 @@ final class PetsPage implements Page {
     private HBox row(Pet pet) {
         PetEntry entry = pet.entry();
         PetCharacter character = pet.character();
-        Node icon = SpritePreview.still(character.art().frame(Pose.of(Anim.IDLE, 0)), 2.25);
+        Node icon = SpritePreview.still(character.art().frame(Pose.of(Anim.IDLE, 0)), 2);
 
         Label status = UiKit.label("", "muted", "small");
-        VBox info = new VBox(4, UiKit.label(character.title(), "strong"));
+        VBox info = new VBox(3, UiKit.label(character.title(), "name"));
         Region fill = null;
         if (ctx.settings().hungerEnabled) {
             Region track = new Region();
             track.getStyleClass().add("satiety-track");
-            track.setPrefSize(140, 6);
-            track.setMaxSize(140, 6);
+            track.setPrefSize(120, 4);
+            track.setMaxSize(120, 4);
             fill = new Region();
             fill.getStyleClass().add("satiety-fill");
-            fill.setPrefHeight(6);
-            fill.setMaxHeight(6);
+            fill.setPrefHeight(4);
+            fill.setMaxHeight(4);
             StackPane bar = new StackPane(track, fill);
             bar.setAlignment(Pos.CENTER_LEFT);
-            bar.setMaxWidth(140);
-            HBox satiety = new HBox(8, bar, status);
+            bar.setMaxWidth(120);
+            HBox satiety = new HBox(10, bar, status);
             satiety.setAlignment(Pos.CENTER_LEFT);
             info.getChildren().add(satiety);
         } else {
@@ -143,9 +158,9 @@ final class PetsPage implements Page {
         }
 
         HBox row = new HBox(icon, info, UiKit.spacer(),
-                UiKit.flat("Покормить", () -> ctx.pets().dropFoodNear(entry.id)),
-                UiKit.flat("Позвать", () -> ctx.pets().callPet(entry.id)),
-                UiKit.danger("Убрать", () -> {
+                UiKit.quiet("Покормить", () -> ctx.pets().dropFoodNear(entry.id)),
+                UiKit.quiet("Позвать", () -> ctx.pets().callPet(entry.id)),
+                UiKit.quietDanger("Убрать", () -> {
                     ctx.pets().removePet(entry.id);
                     rebuildList();
                 }));
@@ -159,15 +174,9 @@ final class PetsPage implements Page {
             Pet pet = refs.pet();
             if (refs.fill() != null) {
                 double part = pet.satiety() / PetEntry.MAX_SATIETY;
-                refs.fill().setPrefWidth(Math.max(2, 140 * part));
-                refs.fill().setMaxWidth(Math.max(2, 140 * part));
-                refs.fill().getStyleClass().removeAll("mid", "low");
-                if (part <= 0.2) {
-                    refs.fill().getStyleClass().add("low");
-                } else if (part <= 0.5) {
-                    refs.fill().getStyleClass().add("mid");
-                }
-                refs.status().setText(Math.round(part * 100) + "% · " + describe(pet.state()));
+                refs.fill().setPrefWidth(Math.max(2, 120 * part));
+                refs.fill().setMaxWidth(Math.max(2, 120 * part));
+                refs.status().setText("сыт на " + Math.round(part * 100) + "%, " + describe(pet.state()));
             } else {
                 refs.status().setText(describe(pet.state()));
             }
@@ -182,8 +191,8 @@ final class PetsPage implements Page {
             case DRAG -> "у вас в руках";
             case FALL -> "летит";
             case LAND -> "приземлился";
-            case EAT -> "кушает";
-            case SAD -> "голодный, грустит";
+            case EAT -> "ест";
+            case SAD -> "проголодался";
         };
     }
 
@@ -204,8 +213,8 @@ final class PetsPage implements Page {
 
     @Override
     public void tick(double now) {
-        for (SpritePreview preview : previews) {
-            preview.tick(now);
+        for (Slot slot : slots) {
+            slot.preview().tick(now);
         }
         if (now - lastRowsUpdate > 0.5) {
             lastRowsUpdate = now;
