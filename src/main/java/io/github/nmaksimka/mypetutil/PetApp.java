@@ -9,12 +9,10 @@ import io.github.nmaksimka.mypetutil.ui.AppContext;
 import io.github.nmaksimka.mypetutil.ui.SettingsWindow;
 import io.github.nmaksimka.mypetutil.ui.TrayController;
 
-import java.io.InputStream;
 import java.nio.file.Path;
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -44,7 +42,6 @@ public class PetApp extends Application implements AppContext {
             Platform.exit();
             return;
         }
-        loadFont();
 
         store = SettingsStore.createDefault();
         settings = store.load();
@@ -72,16 +69,6 @@ public class PetApp extends Application implements AppContext {
         boolean startInTray = getParameters().getRaw().contains("--tray");
         if (!startInTray) {
             settingsWindow.show();
-        }
-    }
-
-    private static void loadFont() {
-        try (InputStream font = PetApp.class.getResourceAsStream("/io/github/nmaksimka/mypetutil/fonts/PressStart2P-Regular.ttf")) {
-            if (font != null) {
-                Font.loadFont(font, 12);
-            }
-        } catch (Exception ignored) {
-            // без пиксельного шрифта заголовки просто будут обычным шрифтом
         }
     }
 

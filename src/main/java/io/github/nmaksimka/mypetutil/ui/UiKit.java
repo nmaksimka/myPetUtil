@@ -5,6 +5,7 @@ import io.github.nmaksimka.mypetutil.sprite.PixelGrid;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -19,8 +20,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
-/** Маленькие фабрики элементов, чтобы страницы выглядели одинаково. */
+/** Маленькие фабрики элементов, чтобы все вкладки выглядели одинаково. */
 public final class UiKit {
+
+    public static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     private UiKit() {
     }
@@ -31,6 +34,7 @@ public final class UiKit {
         return label;
     }
 
+    /** Текст, который переносится на новые строки. */
     public static Label text(String text, String... styles) {
         Label label = label(text, styles);
         label.setWrapText(true);
@@ -38,6 +42,7 @@ public final class UiKit {
         return label;
     }
 
+    /** Главная кнопка (залита акцентным цветом). */
     public static Button button(String text, Runnable action) {
         Button button = new Button(text);
         button.getStyleClass().setAll("btn");
@@ -45,22 +50,18 @@ public final class UiKit {
         return button;
     }
 
-    public static Button primary(String text, Runnable action) {
-        Button button = button(text, action);
-        button.getStyleClass().add("btn-primary");
-        return button;
-    }
-
-    public static Button flat(String text, Runnable action) {
+    /** Тихая кнопка-ссылка. */
+    public static Button quiet(String text, Runnable action) {
         Button button = new Button(text);
-        button.getStyleClass().setAll("btn-flat");
+        button.getStyleClass().setAll("btn-quiet");
         button.setOnAction(e -> action.run());
         return button;
     }
 
-    public static Button danger(String text, Runnable action) {
-        Button button = flat(text, action);
-        button.getStyleClass().add("btn-danger");
+    /** Тихая кнопка для удаления: серая, чтобы не кричать. */
+    public static Button quietDanger(String text, Runnable action) {
+        Button button = quiet(text, action);
+        button.getStyleClass().add("danger");
         return button;
     }
 
@@ -70,37 +71,58 @@ public final class UiKit {
         return region;
     }
 
-    /** Страница: заголовок пиксельным шрифтом и пояснение под ним. */
-    public static VBox page(String title, String subtitle) {
+    /** Страница: заголовок и короткое пояснение. */
+    public static VBox page(String title, String lead) {
         VBox page = new VBox();
         page.getStyleClass().add("page");
-        VBox header = new VBox(10, label(title, "page-title"), text(subtitle, "page-subtitle"));
+        VBox header = new VBox(4, label(title, "title"));
+        if (lead != null) {
+            header.getChildren().add(text(lead, "lead"));
+        }
         page.getChildren().add(header);
         return page;
     }
 
-    public static Label section(String title) {
-        return label(title.toUpperCase(), "section-title");
+    public static Label heading(String title) {
+        return label(title, "heading");
     }
 
-    /** Строка настройки: слева название и описание, справа элемент управления. */
-    public static HBox settingRow(String title, String description, Node control) {
-        VBox texts = new VBox(3, label(title, "strong"));
+    /** Группа строк в одной рамке, между строками тонкие линии. */
+    public static VBox group(Node... rows) {
+        VBox group = new VBox();
+        group.getStyleClass().add("group");
+        for (Node row : rows) {
+            addRow(group, row);
+        }
+        return group;
+    }
+
+    public static void addRow(VBox group, Node row) {
+        if (group.getChildren().isEmpty()) {
+            row.getStyleClass().add("first");
+        }
+        group.getChildren().add(row);
+    }
+
+    /** Строка настройки: слева название и пояснение, справа элемент управления. */
+    public static HBox row(String title, String description, Node control) {
+        VBox texts = new VBox(2, label(title, "name"));
         if (description != null) {
             texts.getChildren().add(text(description, "muted", "small"));
         }
         HBox.setHgrow(texts, Priority.ALWAYS);
         texts.setMaxWidth(Double.MAX_VALUE);
-        HBox row = new HBox(16, texts, control);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.getStyleClass().add("card");
+        HBox row = control == null ? new HBox(texts) : new HBox(texts, control);
+        row.getStyleClass().add("row");
         return row;
     }
 
-    /** Несколько кнопок, из которых выбрана ровно одна. */
+    /** Несколько вариантов в одной плашке, выбран ровно один. */
     public static <T> HBox segmented(List<T> values, Function<T, String> title, T selected, Consumer<T> onSelect) {
-        HBox box = new HBox(8);
+        HBox box = new HBox();
+        box.getStyleClass().add("segments");
         box.setAlignment(Pos.CENTER_LEFT);
+        box.setMaxWidth(Region.USE_PREF_SIZE);
         ToggleGroup group = new ToggleGroup();
         for (T value : values) {
             ToggleButton button = new ToggleButton(title.apply(value));
@@ -112,7 +134,6 @@ public final class UiKit {
         }
         group.selectedToggleProperty().addListener((obs, old, now) -> {
             if (now == null) {
-                // выбор нельзя снять совсем — возвращаем старый
                 group.selectToggle(old);
                 return;
             }
@@ -123,7 +144,7 @@ public final class UiKit {
         return box;
     }
 
-    /** Картинка из пиксельной сетки, увеличенная без размытия — для иконок окна и трея. */
+    /** Картинка из пиксельной сетки, увеличенная без размытия — для иконки окна. */
     public static Image scaled(PixelGrid grid, int factor) {
         int w = grid.width() * factor;
         int h = grid.height() * factor;
