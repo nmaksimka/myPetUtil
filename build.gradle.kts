@@ -62,3 +62,13 @@ tasks.register<JavaExec>("dumpWindows") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass = "io.github.nmaksimka.mypetutil.platform.WindowDump"
 }
+
+// Скриншоты окна настроек для README: docs/screenshots
+tasks.register<JavaExec>("uiScreenshots") {
+    group = "tools"
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass = "io.github.nmaksimka.mypetutil.tools.UiScreenshots"
+    jvmArgs("--module-path", classpath.filter { it.name.startsWith("javafx") }.asPath,
+            "--add-modules", "javafx.controls")
+    args(layout.projectDirectory.dir("docs/screenshots").asFile.absolutePath)
+}
