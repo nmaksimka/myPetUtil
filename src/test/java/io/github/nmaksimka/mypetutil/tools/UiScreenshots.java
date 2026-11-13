@@ -3,7 +3,7 @@ package io.github.nmaksimka.mypetutil.tools;
 import io.github.nmaksimka.mypetutil.config.BehaviorMode;
 import io.github.nmaksimka.mypetutil.config.PetEntry;
 import io.github.nmaksimka.mypetutil.config.Settings;
-import io.github.nmaksimka.mypetutil.config.ThemeMode;
+import io.github.nmaksimka.mypetutil.config.Theme;
 import io.github.nmaksimka.mypetutil.overlay.PetManager;
 import io.github.nmaksimka.mypetutil.platform.DesktopSnapshot.PhysRect;
 import io.github.nmaksimka.mypetutil.platform.DesktopSnapshot.RawWindow;
@@ -14,7 +14,6 @@ import io.github.nmaksimka.mypetutil.ui.SettingsWindow;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,7 +23,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javax.imageio.ImageIO;
@@ -35,7 +33,7 @@ import javax.imageio.ImageIO;
  */
 public class UiScreenshots extends Application implements AppContext {
 
-    private static final String[] NAMES = {"pets", "behavior", "feeding", "apps", "general"};
+    private static final String[] NAMES = {"pets", "behavior", "food", "apps", "themes", "system"};
 
     private final Settings settings = new Settings();
     private PetManager manager;
@@ -52,15 +50,12 @@ public class UiScreenshots extends Application implements AppContext {
     public void start(Stage primaryStage) throws Exception {
         out = Path.of(getParameters().getRaw().isEmpty() ? "docs/screenshots" : getParameters().getRaw().get(0));
         Files.createDirectories(out);
-        try (InputStream font = getClass().getResourceAsStream("/io/github/nmaksimka/mypetutil/fonts/PressStart2P-Regular.ttf")) {
-            Font.loadFont(font, 12);
-        }
         settings.mode = BehaviorMode.WINDOWS;
         settings.hungerEnabled = true;
-        settings.theme = ThemeMode.LIGHT;
+        settings.theme = Theme.SNOW;
         settings.blockedApps.add("game.exe");
         double[] satiety = {92, 64, 18};
-        PetCharacter[] who = {PetCharacter.CLAUDE, PetCharacter.MINION, PetCharacter.STEVE};
+        PetCharacter[] who = {PetCharacter.CLAUDE, PetCharacter.SAKURA, PetCharacter.STEVE};
         for (int i = 0; i < who.length; i++) {
             PetEntry entry = new PetEntry(who[i]);
             entry.satiety = satiety[i];
@@ -85,12 +80,12 @@ public class UiScreenshots extends Application implements AppContext {
             return;
         }
         boolean dark = step >= pages;
-        settings.theme = dark ? ThemeMode.DARK : ThemeMode.LIGHT;
+        settings.theme = dark ? Theme.GRAPHITE : Theme.SNOW;
         window.themeChanged();
         window.openPage(step % pages);
         PauseTransition wait = new PauseTransition(Duration.millis(900));
         wait.setOnFinished(e -> {
-            save(window.stage().getScene().snapshot(null), NAMES[step % pages] + (dark ? "-dark" : "-light") + ".png");
+            save(window.stage().getScene().snapshot(null), NAMES[step % pages] + (dark ? "-dark" : "") + ".png");
             step++;
             next();
         });
