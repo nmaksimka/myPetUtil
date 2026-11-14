@@ -20,6 +20,8 @@ public final class FoodView extends OverlayStage {
 
     private final FoodItem food;
     private double pixel;
+    private int lastAlpha = -1;
+    private double lastSize;
 
     public FoodView(Window owner, FoodItem food, double pixel, Listener listener) {
         super(owner, "food", FoodItem.size(pixel), FoodItem.size(pixel));
@@ -53,6 +55,13 @@ public final class FoodView extends OverlayStage {
     public void render() {
         double size = FoodItem.size(pixel);
         moveTo(food.x(), food.y() - size);
+        // рисуем заново только при изменении размера или прозрачности (еда тает в конце)
+        int alpha = (int) Math.round(food.opacity() * 20);
+        if (alpha == lastAlpha && size == lastSize) {
+            return;
+        }
+        lastAlpha = alpha;
+        lastSize = size;
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.clearRect(0, 0, size, size);
         gc.setGlobalAlpha(food.opacity());

@@ -26,7 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Раз в 300 мс в фоне спрашивает у Windows список окон и мониторов.
+ * Раз в 400 мс в фоне спрашивает у Windows список окон и мониторов.
  * Последний результат лежит в {@link #latest()}, JavaFX-поток его только читает.
  */
 public final class WindowScanner implements AutoCloseable {
@@ -51,7 +51,7 @@ public final class WindowScanner implements AutoCloseable {
     private int scans;
 
     public void start() {
-        executor.scheduleWithFixedDelay(this::scanSafely, 0, 300, TimeUnit.MILLISECONDS);
+        executor.scheduleWithFixedDelay(this::scanSafely, 0, 400, TimeUnit.MILLISECONDS);
     }
 
     public DesktopSnapshot latest() {
@@ -60,8 +60,13 @@ public final class WindowScanner implements AutoCloseable {
 
     private void scanSafely() {
         try {
-            latest.set(scan());
-            if (++scans % 200 == 0) {
+            DesktopSnapshot next = scan();
+            // если на экране ничего не поменялось, оставляем старый объект:
+            // по нему менеджер понимает, что пересобирать «мир» не нужно
+            if (!next.equals(latest.get())) {
+                latest.set(next);
+            }
+            if (++scans % 150 == 0) {
                 exeByPid.clear(); // pid-ы переиспользуются, раз в минуту чистим кеш
             }
         } catch (Throwable e) {
@@ -195,7 +200,8 @@ public final class WindowScanner implements AutoCloseable {
             if (User32.INSTANCE.GetMonitorInfo(hMonitor, info).booleanValue()) {
                 monitors.add(new Monitor(
                         new PhysRect(info.rcMonitor.left, info.rcMonitor.top, info.rcMonitor.right, info.rcMonitor.bottom),
-                        new PhysRect(info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom)));
+                        new PhysRect(info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom),
+                        (info.dwFlags & WinUser.MONITORINFOF_PRIMARY) != 0));
             }
             return 1;
         }, null);

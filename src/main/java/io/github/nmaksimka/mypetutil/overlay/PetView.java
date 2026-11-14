@@ -28,8 +28,16 @@ public final class PetView extends OverlayStage {
         void released(PetView view, double screenX, double screenY);
     }
 
+    private static final int NONE = Integer.MIN_VALUE;
+
+    /** Всё, что влияет на картинку питомца. Сравнивается с прошлым кадром. */
+    private record RenderKey(PixelGrid frame, boolean mirror, int clipFrom, int clipTo, int angle,
+                             int heartBob, boolean question, int satiety, double pixel) {
+    }
+
     private final Pet pet;
     private double pixel;
+    private RenderKey lastKey;
 
     public PetView(Window owner, Pet pet, double pixel, DragListener listener) {
         super(owner, "pet", width(pixel), height(pixel));
@@ -82,8 +90,17 @@ public final class PetView extends OverlayStage {
         show(spriteToStageX(), spriteToStageY());
     }
 
+    /**
+     * Когда питомец ходит сам, окно двигается шагами по одному пикселю спрайта.
+     * Двигать прозрачное окно для Windows дорого: так сдвигов в 3-6 раз меньше,
+     * а походка выглядит как в пиксельных играх. Когда его тащат или он летит — плавно.
+     */
     private double spriteToStageX() {
-        return pet.x() - SIDE * pixel;
+        double x = pet.x();
+        if (pet.state().grounded()) {
+            x = Math.floor(x / pixel) * pixel;
+        }
+        return x - SIDE * pixel;
     }
 
     private double spriteToStageY() {
@@ -98,39 +115,51 @@ public final class PetView extends OverlayStage {
         double oy = TOP * pixel;
         double stageX = stageX();
 
+        // Сначала собираем всё, от чего зависит картинка. Если ничего не поменялось с прошлого
+        // кадра — не перерисовываем: анимация меняет кадр 5-8 раз в секунду, а цикл крутится 60.
+        Pose pose = pet.pose();
+        PixelGrid frame = pet.character().art().frame(pose);
+        boolean mirror = pet.facing() < 0;
+        int clipFrom = pet.clipMin() == null ? Integer.MIN_VALUE : (int) Math.round(pet.clipMin() - stageX);
+        int clipTo = pet.clipMax() == null ? Integer.MAX_VALUE : (int) Math.round(pet.clipMax() - stageX);
+        int angle = pet.state() == PetState.DRAG ? (int) Math.round(Math.max(-16, Math.min(16, -pet.vx() / 70))) : 0;
+        int heartBob = pet.heartTimer() > 0 ? (int) Math.round(Math.sin(time * 6)) : NONE;
+        boolean question = heartBob == NONE && pet.questionTimer() > 0;
+        int satiety = hungerEnabled && (pet.hovered() || pet.state() == PetState.SAD)
+                ? (int) Math.round(pet.satiety()) : NONE;
+        RenderKey key = new RenderKey(frame, mirror, clipFrom, clipTo, angle, heartBob, question, satiety, pixel);
+        if (key.equals(lastKey)) {
+            return;
+        }
+        lastKey = key;
+
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         gc.save();
-        if (pet.clipMin() != null) {
+        if (clipFrom != Integer.MIN_VALUE) {
             // питомец заходит в окно или выходит из него: видна только часть над полом
-            double from = pet.clipMin() - stageX;
-            double to = pet.clipMax() - stageX;
             gc.beginPath();
-            gc.rect(from, 0, Math.max(0, to - from), canvas.getHeight());
+            gc.rect(clipFrom, 0, Math.max(0, clipTo - clipFrom), canvas.getHeight());
             gc.clip();
         }
-        if (pet.state() == PetState.DRAG) {
-            double angle = Math.max(-16, Math.min(16, -pet.vx() / 70));
+        if (angle != 0) {
             gc.translate(ox + size / 2, oy);
             gc.rotate(angle);
             gc.translate(-(ox + size / 2), -oy);
         }
-        Pose pose = pet.pose();
-        PixelGrid frame = pet.character().art().frame(pose);
-        SpriteImages.draw(gc, frame, ox, oy, size, size, pet.facing() < 0);
+        SpriteImages.draw(gc, frame, ox, oy, size, size, mirror);
         gc.restore();
 
         double headY = oy + topOfSprite(frame) * pixel;
         double iconY = headY - 9 * pixel;
-        if (pet.heartTimer() > 0) {
-            double bob = Math.sin(time * 6) * pixel;
-            SpriteImages.draw(gc, Emotes.HEART, ox + size / 2 - 3.5 * pixel, iconY + bob,
+        if (heartBob != NONE) {
+            SpriteImages.draw(gc, Emotes.HEART, ox + size / 2 - 3.5 * pixel, iconY + heartBob * pixel,
                     7 * pixel, 6 * pixel, false);
-        } else if (pet.questionTimer() > 0) {
+        } else if (question) {
             SpriteImages.draw(gc, Emotes.QUESTION, ox + size / 2 - 2.5 * pixel, iconY - pixel,
                     5 * pixel, 7 * pixel, false);
         }
-        if (hungerEnabled && (pet.hovered() || pet.state() == PetState.SAD)) {
+        if (satiety != NONE) {
             drawSatiety(gc, ox + 2 * pixel, headY - 2.5 * pixel, size - 4 * pixel);
         }
     }
