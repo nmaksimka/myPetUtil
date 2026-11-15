@@ -17,6 +17,8 @@ public final class SpritePreview extends Canvas {
     private Anim anim = Anim.IDLE;
     private double animStart;
     private boolean mirror;
+    private PixelGrid lastGrid;
+    private boolean lastMirror;
 
     public SpritePreview(PetCharacter character, double pixel) {
         super(16 * pixel, 16 * pixel);
@@ -50,6 +52,12 @@ public final class SpritePreview extends Canvas {
         // моргает примерно раз в 3 секунды
         boolean blink = anim == Anim.IDLE && (now % 3.2) < 0.14;
         PixelGrid grid = character.art().frame(new Pose(anim, frame, blink));
+        // кадр сменился? если нет — холст уже правильный, не трогаем его
+        if (grid == lastGrid && mirror == lastMirror) {
+            return;
+        }
+        lastGrid = grid;
+        lastMirror = mirror;
         GraphicsContext gc = getGraphicsContext2D();
         gc.clearRect(0, 0, getWidth(), getHeight());
         SpriteImages.draw(gc, grid, 0, 0, 16 * pixel, 16 * pixel, mirror);
