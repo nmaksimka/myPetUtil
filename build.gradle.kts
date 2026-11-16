@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.nmaksimka"
-version = "1.0.0"
+version = "1.0.1"
 
 java {
     toolchain {
@@ -30,8 +30,25 @@ javafx {
     modules = listOf("javafx.controls")
 }
 
+// Питомцу много памяти не нужно: ограничиваем кучу и берём простой сборщик мусора.
+// Без этого Java сама занимает до четверти оперативки. Потоков JIT-компилятора — два:
+// на машине с 20 ядрами Java по умолчанию запускает 8-10 и они грузят процессор на старте.
+val lightJvm = listOf(
+    "-Xms16m",
+    "-Xmx96m",
+    "-Xss512k",
+    "-XX:+UseSerialGC",
+    "-XX:CICompilerCount=2",
+    "-XX:ReservedCodeCacheSize=32m",
+    "-Dfile.encoding=UTF-8"
+)
+
+// Части Java, которые реально нужны (проверено через jdeps). Остальные ~65 модулей в exe не кладём.
+val runtimeModules = "java.base,java.desktop,java.logging,java.xml,jdk.unsupported"
+
 application {
     mainClass = "io.github.nmaksimka.mypetutil.Launcher"
+    applicationDefaultJvmArgs = lightJvm
 }
 
 tasks.withType<JavaCompile> {
@@ -113,8 +130,9 @@ tasks.register<Exec>("packageExe") {
         "--main-jar", tasks.jar.get().archiveFileName.get(),
         "--main-class", "io.github.nmaksimka.mypetutil.Launcher",
         "--icon", layout.projectDirectory.file("src/main/packaging/myPetUtil.ico").asFile.absolutePath,
-        "--java-options", "-Dfile.encoding=UTF-8",
-        "--jlink-options", "--strip-debug --no-header-files --no-man-pages --strip-native-commands",
+        *lightJvm.flatMap { listOf("--java-options", it) }.toTypedArray(),
+        "--add-modules", runtimeModules,
+        "--jlink-options", "--strip-debug --no-header-files --no-man-pages --strip-native-commands --compress=zip-6",
         "--dest", dest.absolutePath
     )
 }
