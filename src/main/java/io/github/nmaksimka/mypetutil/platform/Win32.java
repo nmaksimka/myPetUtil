@@ -21,6 +21,7 @@ final class Win32 {
 
     static final int SWP_NOSIZE = 0x0001;
     static final int SWP_NOMOVE = 0x0002;
+    static final int SWP_NOZORDER = 0x0004;
     static final int SWP_NOACTIVATE = 0x0010;
     static final int SWP_FRAMECHANGED = 0x0020;
 

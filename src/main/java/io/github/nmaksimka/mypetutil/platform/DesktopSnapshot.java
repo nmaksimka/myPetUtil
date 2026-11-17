@@ -35,8 +35,8 @@ public record DesktopSnapshot(List<Monitor> monitors, List<RawWindow> windows,
         }
     }
 
-    /** Монитор: весь экран и рабочая область без панели задач. */
-    public record Monitor(PhysRect bounds, PhysRect work) {
+    /** Монитор: весь экран, рабочая область без панели задач и основной ли он. */
+    public record Monitor(PhysRect bounds, PhysRect work, boolean primary) {
     }
 
     public record RawWindow(long handle, PhysRect rect, String exe, String title) {

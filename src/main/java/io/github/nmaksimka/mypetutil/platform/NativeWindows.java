@@ -57,6 +57,23 @@ public final class NativeWindows {
         }
     }
 
+    /**
+     * Сдвигает окно средствами Windows, в физических пикселях. JavaFX при этом не перерисовывает
+     * содержимое окна (при stage.setX — перерисовывает и заново копирует картинку из видеокарты).
+     */
+    public static boolean move(HWND hwnd, int x, int y) {
+        if (hwnd == null) {
+            return false;
+        }
+        try {
+            return User32.INSTANCE.SetWindowPos(hwnd, null, x, y, 0, 0,
+                    Win32.SWP_NOSIZE | Win32.SWP_NOZORDER | Win32.SWP_NOACTIVATE);
+        } catch (Throwable e) {
+            LOG.log(Level.FINE, "SetWindowPos move failed", e);
+            return false;
+        }
+    }
+
     /** Тёмный заголовок окна в Windows 10/11. */
     public static void setDarkTitleBar(HWND hwnd, boolean dark) {
         if (hwnd == null) {
@@ -67,7 +84,7 @@ public final class NativeWindows {
                     new IntByReference(dark ? 1 : 0), 4);
             // заставляем Windows перерисовать рамку
             User32.INSTANCE.SetWindowPos(hwnd, null, 0, 0, 0, 0,
-                    Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE | Win32.SWP_FRAMECHANGED | 0x0004);
+                    Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE | Win32.SWP_FRAMECHANGED | Win32.SWP_NOZORDER);
         } catch (Throwable e) {
             LOG.log(Level.FINE, "cannot set dark title bar", e);
         }

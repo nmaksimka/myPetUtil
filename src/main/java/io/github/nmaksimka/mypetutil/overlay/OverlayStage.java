@@ -3,6 +3,7 @@ package io.github.nmaksimka.mypetutil.overlay;
 import com.sun.jna.platform.win32.WinDef.HWND;
 
 import io.github.nmaksimka.mypetutil.platform.NativeWindows;
+import io.github.nmaksimka.mypetutil.platform.ScreenMapper;
 import io.github.nmaksimka.mypetutil.platform.WindowScanner;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -61,17 +62,30 @@ public class OverlayStage {
         stage.setHeight(height);
     }
 
-    /** Двигает окно, только если позиция реально изменилась — лишние вызовы дорогие. */
+    /** Как переводить координаты в пиксели Windows. Обновляет PetManager при смене мониторов. */
+    private static volatile ScreenMapper.Mapped mapping;
+
+    public static void setMapping(ScreenMapper.Mapped value) {
+        mapping = value;
+    }
+
+    /**
+     * Двигает окно, только если позиция реально изменилась.
+     * Когда окно уже создано, двигаем его через WinAPI — так JavaFX не перерисовывает его на каждом шаге.
+     */
     public void moveTo(double x, double y) {
         double rx = Math.round(x);
         double ry = Math.round(y);
-        if (rx != lastX) {
-            stage.setX(rx);
-            lastX = rx;
+        if (rx == lastX && ry == lastY) {
+            return;
         }
-        if (ry != lastY) {
+        lastX = rx;
+        lastY = ry;
+        ScreenMapper.Mapped map = mapping;
+        int[] phys = hwnd != null && map != null ? map.toPhysical(rx, ry) : null;
+        if (phys == null || !NativeWindows.move(hwnd, phys[0], phys[1])) {
+            stage.setX(rx);
             stage.setY(ry);
-            lastY = ry;
         }
     }
 
@@ -86,6 +100,11 @@ public class OverlayStage {
         } else if (!visible && stage.isShowing()) {
             stage.hide();
         }
+    }
+
+    /** Где окно на самом деле, по мнению JavaFX (для отладки). */
+    public String actualPosition() {
+        return Math.round(stage.getX()) + "," + Math.round(stage.getY());
     }
 
     public double stageX() {

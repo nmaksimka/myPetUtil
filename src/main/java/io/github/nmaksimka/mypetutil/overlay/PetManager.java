@@ -364,9 +364,9 @@ public final class PetManager {
             if (debugTimer <= 0) {
                 debugTimer = 2;
                 System.out.println("floors " + world.floors());
-                pets.forEach(v -> System.out.printf("%s %s x=%.0f y=%.0f owner=%s stage=%.0f,%.0f%n",
+                pets.forEach(v -> System.out.printf("%s %s x=%.0f y=%.0f owner=%s stage=%.0f,%.0f actual=%s%n",
                         v.pet().character(), v.pet().state(), v.pet().x(), v.pet().y(), v.pet().owner(),
-                        v.stageX(), v.stageY()));
+                        v.stageX(), v.stageY(), v.actualPosition()));
             }
         }
 
@@ -403,9 +403,11 @@ public final class PetManager {
             Rectangle2D v = screen.getVisualBounds();
             fxScreens.add(new FxScreen(
                     new Rect(b.getMinX(), b.getMinY(), b.getMaxX(), b.getMaxY()),
-                    new Rect(v.getMinX(), v.getMinY(), v.getMaxX(), v.getMaxY())));
+                    new Rect(v.getMinX(), v.getMinY(), v.getMaxX(), v.getMaxY()),
+                    screen.equals(Screen.getPrimary())));
         }
         ScreenMapper.Mapped mapped = ScreenMapper.map(scanner.latest(), fxScreens);
+        OverlayStage.setMapping(mapped);
         double size = 16 * settings.scale;
         return WorldBuilder.build(mapped.screens(), mapped.windows(),
                 settings.mode == BehaviorMode.WINDOWS,
