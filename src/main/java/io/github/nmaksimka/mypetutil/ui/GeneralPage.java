@@ -13,7 +13,7 @@ import javafx.scene.layout.VBox;
 final class GeneralPage implements Page {
 
     private static final Logger LOG = Logger.getLogger(GeneralPage.class.getName());
-    static final String VERSION = "1.0.0";
+    static final String VERSION = "1.0.1";
 
     private final AppContext ctx;
     private final VBox root;
